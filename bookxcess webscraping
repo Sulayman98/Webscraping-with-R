@@ -1,0 +1,22 @@
+
+library(httr)
+library(jsonlite)
+library(dplyr)
+
+# Shopify's built-in JSON endpoint - no scraping needed!
+# Gets 250 products per page (the maximum)
+url <- "https://www.bookxcess.com/collections/fiction/products.json?limit=250"
+
+response <- GET(url)
+data <- content(response, as = "text") %>% fromJSON()
+
+products <- data$products
+
+# Extract what you need
+df <- data.frame(
+  name          = products$title,
+  sale_price    = sapply(products$variants, function(v) v$price[1]),
+  original_price = sapply(products$variants, function(v) v$compare_at_price[1])
+)
+
+View(df)
