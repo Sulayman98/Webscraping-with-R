@@ -1,20 +1,67 @@
-
 library(httr)
 library(jsonlite)
 library(dplyr)
 
-# Shopify's built-in JSON endpoint - no scraping needed!
-# Gets 250 products per page (the maximum)
+# Uses shopify's built-in JSON endpoint instead of scraping HTML, which is publically available for webscraping
+# Original source link for bookxcess "https://www.bookxcess.com/collections/fiction"
+# Adding /products.json switches from the visual webpage to the raw JSON data endpoint
+# Including ?limit=250, which is the standard maximum limit that can be extracted from Shopify
+
 url <- "https://www.bookxcess.com/collections/fiction/products.json?limit=250"
 
+#Use GET to store the information the Bookxcess server provides
 response <- GET(url)
+
+#Use content to open the information from 'response' to red as text
+#then convert the raw text from before into JSON such that it becomes an object that can be worked with
 data <- content(response, as = "text") %>% fromJSON()
+
+#Figuring out what is inside the data. From this function, only "products" is available
+names(data)
 
 products <- data$products
 
-# Extract what you need
+#Finding out the details under products
+colnames(products)
+str(products)
+
+#inspecting title, gives the name of books
+name = products$title
+
+#inspecting variants,there are prices of the books embedded in this category
+variant = products$variants
+variant
+
+#Given we know there are prices of books embedded, we will use sapply to get the price for all books in the page
+#Function(v) is a placeholder for variance to extract price
+#[1] was used to get only the first price
+first_price = sapply(products$variants, function(v) v$price[1]) 
+first_price
+
+#There is another sub-category named compare_at_price. After extraction, it seems that they are higher than the price extracted previously
+
+second_price = sapply(products$variants, function(v) v$compare_at_price)
+second_price
+
+#The check data frame was created to compare second_price and first_price. 
+#Since the difference is always positive, this suggests second_price may be the original price while first_price is the discounted price
+check <-data.frame(
+  first_price = sapply(products$variants, function(v) v$price[1]), 
+  second_price = sapply(products$variants, function(v) v$compare_at_price),
+  difference = as.numeric(sapply(products$variants, function(v) v$compare_at_price)) - as.numeric(sapply(products$variants, function(v) v$price[1]))
+)
+
+check
+
+#inspecting product_type, it seems to provide author names
+type = products$product_type
+type
+
+
+# Extract relevant information for analysis
 df <- data.frame(
   name          = products$title,
+  author        = products$product_type,
   sale_price    = sapply(products$variants, function(v) v$price[1]),
   original_price = sapply(products$variants, function(v) v$compare_at_price[1])
 )
