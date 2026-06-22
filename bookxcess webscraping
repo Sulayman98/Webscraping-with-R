@@ -57,16 +57,21 @@ check
 type = products$product_type
 type
 
+#inspecting vendors, includes details on publishers 
+vendors = products$vendor
+vendors
 
 # Extract relevant information for analysis
-df <- data.frame(
+df1 <- data.frame(
   name          = products$title,
   author        = products$product_type,
+  vendors       = products&vendors,
   sale_price    = sapply(products$variants, function(v) v$price[1]),
   original_price = sapply(products$variants, function(v) v$compare_at_price[1])
 )
 
-View(df)
+View(df1)
+
 #Extracting from the second page
 
 url2 = "https://www.bookxcess.com/collections/fiction/products.json?limit=250&page=2"
@@ -76,6 +81,7 @@ products2 <- data2$products
 df2 <- data.frame(
   name          = products2$title,
   author        = products2$product_type,
+  vendors       = products2&vendors,
   sale_price    = sapply(products2$variants, function(v) v$price[1]),
   original_price = sapply(products2$variants, function(v) v$compare_at_price[1])
 )
@@ -90,7 +96,9 @@ products3 <- data3$products
 df3 <- data.frame(
   name          = products3$title,
   author        = products3$product_type,
+  vendors       = products&vendors3,
   sale_price    = sapply(products3$variants, function(v) v$price[1]),
   original_price = sapply(products3$variants, function(v) v$compare_at_price[1])
 )
 View(df3)
+
