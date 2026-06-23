@@ -1,0 +1,75 @@
+library(tm)
+library(stringr)
+library(tidyverse)
+
+
+#Loading the relevant songs which have different themes
+fine = read.csv("C:/Users/User/OneDrive/Desktop/Unstructured Data/Project 1/Part 1/Q2/csv/Fine.csv")
+idontcare = read.csv("C:/Users/User/OneDrive/Desktop/Unstructured Data/Project 1/Part 1/Q2/csv/Thinking Out Loud.csv")
+highway= read.csv("C:/Users/User/OneDrive/Desktop/Unstructured Data/Project 1/Part 1/Q2/csv/Life is a Highway.csv")
+stillondeen = read.csv("C:/Users/User/OneDrive/Desktop/Unstructured Data/Project 1/Part 1/Q2/csv/Still on Deen.csv")
+harp = read.csv("C:/Users/User/OneDrive/Desktop/Unstructured Data/Project 1/Part 1/Q2/csv/The Boy Who Played the Harp.csv")
+
+#Checking the files
+colnames(fine)
+colnames(idontcare)
+colnames(highway)
+colnames(stillondeen)
+colnames(harp)
+
+
+#Combining all data frames into a single vector and changing it into a corpus
+all_songs = c(fine$Lyrics, idontcare$Lyrics, highway$Lyrics, 
+              stillondeen$Lyrics, harp$Lyrics)
+
+docs <- Corpus(VectorSource(all_songs))
+
+docs
+
+#Data cleaning and pre-processing
+toSpace <- content_transformer(function(x, pattern){return(gsub(pattern, " ", x))})
+
+docs = tm_map(docs,removePunctuation)                #remove punctuation
+docs = tm_map(docs,content_transformer(tolower))     #changes all words to lower case
+docs = tm_map(docs,removeNumbers)                    #remove numbers
+docs = tm_map(docs,removeWords,stopwords("english")) #remove stop words
+docs = tm_map(docs, stripWhitespace)                 #removes extra spaces
+docs = tm_map(docs, toSpace, "-")                    #remove hyphens
+
+#Checking the results
+as.character(docs[1])
+as.character(docs[50])
+as.character(docs[100])
+
+#Building a Document Term Matrix
+dtm = DocumentTermMatrix(docs)
+inspect(dtm[1:30,1:100])
+
+#Finding frequency by converting the DTM into a regular matrix, summing up words and sorting from highest to lowest
+freq = colSums(as.matrix(dtm))
+ord = order(freq, decreasing = TRUE)
+
+freq[head(ord)]
+
+#Building a dataframe
+
+wf = data.frame(names(freq), freq)
+names(wf) = c("TERM","FREQ")
+head(wf)
+
+# Sort by frequency
+wf <- wf[order(wf$FREQ, decreasing=T),]
+head(wf, 10)  # show top 10 terms
+
+#Creating word cloud
+library(wordcloud)
+library(wordcloud2)
+
+# Basic word cloud
+wordcloud(names(freq), freq, min.freq=2, colors=brewer.pal(8,"Dark2"))
+
+# Fancy word cloud with wordcloud2
+wordcloud2(wf, size=0.5)
+
+# Different shapes
+wordcloud2(wf, shape="star", size=0.5)
