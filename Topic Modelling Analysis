@@ -119,3 +119,35 @@ ap_documents_5 %>%
   geom_boxplot() +
   labs(title = "Document-Topic Probabilities (5 Topics)",
        x = "Topic", y = "Gamma")
+
+##Part 2 Performing Text Clustering
+
+dtm_tfidf <- weightTfIdf(dtm)
+dtm_tfidf <- removeSparseTerms(dtm_tfidf, 0.999)
+tfidf_matrix <- as.matrix(dtm_tfidf)
+dist_matrix <- dist(tfidf_matrix, method = "cosine")
+
+truth.K = 2
+
+clustering.kmeans <- kmeans(tfidf_matrix, truth.K)
+clustering.hierarchical <- hclust(dist_matrix, method = "ward.D2")
+clustering.dbscan <- hdbscan(dist_matrix, minPts = 10)
+
+points <- cmdscale(dist_matrix, k = 2)
+
+plot(points, main = 'K-Means clustering', col = as.factor(clustering.kmeans$cluster),
+     xaxt = 'n', yaxt = 'n', xlab = '', ylab = '')
+
+plot(points, main = 'Hierarchical clustering', col = as.factor(cutree(clustering.hierarchical, k = truth.K)),
+     xaxt = 'n', yaxt = 'n', xlab = '', ylab = '')
+
+plot(points, main = 'Density-based clustering', col = as.factor(clustering.dbscan$cluster),
+     xaxt = 'n', yaxt = 'n', xlab = '', ylab = '')
+
+plot(clustering.hierarchical)
+rect.hclust(clustering.hierarchical, 2)
+
+table(clustering.kmeans$cluster)
+table(cutree(clustering.hierarchical, k = truth.K))
+table(clustering.dbscan$cluster)
+
