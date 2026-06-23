@@ -84,3 +84,38 @@ beta_spread %>%
 
 ap_documents <- tidy(lda_2, matrix = "gamma")
 ap_documents
+
+ap_documents %>%
+  ggplot(aes(factor(topic), gamma)) +
+  geom_boxplot() +
+  labs(title = "Document-Topic Probabilities",
+       x = "Topic", y = "Gamma")
+
+#Trying LDA with different number of topics 
+#From here, the LDA breaks down the finance topic into three subcategories while football has 2 subcategories
+lda_5 <- LDA(dtm, k = 5, control = list(seed = 1234))
+lda_5
+
+ap_topics = tidy(lda_5, matrix = "beta") 
+ap_topics
+
+ap_top_terms_5 <- ap_topics %>% 
+  group_by(topic) %>% 
+  top_n(10, beta) %>% 
+  ungroup() %>% 
+  arrange(topic, -beta)
+
+ap_top_terms_5 %>% 
+  mutate(term = reorder(term, beta)) %>% 
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+
+ap_documents_5 <- tidy(lda_5, matrix = "gamma")
+
+ap_documents_5 %>%
+  ggplot(aes(factor(topic), gamma)) +
+  geom_boxplot() +
+  labs(title = "Document-Topic Probabilities (5 Topics)",
+       x = "Topic", y = "Gamma")
