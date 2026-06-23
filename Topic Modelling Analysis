@@ -1,0 +1,86 @@
+
+library(tm) #the main text mining package; used to load your text files and clean them (remove punctuation, stopwords, etc.)
+library(topicmodels) #runs the LDA topic modelling algorithm
+library(tidytext) #helps extract and tidy the LDA results (beta and gamma matrices)
+library(tidyr) # helps reshape data, used for the beta spread calculation
+library(ggplot2) #creates the visualizations (bar charts, etc.)
+library(dplyr) #data manipulation (filtering, grouping, arranging results)
+library(dbscan) #runs the HDBSCAN clustering algorithm
+library(cluster) #used for the cluster plot visualization (clusplot)
+library(proxy) #computes the cosine distance matrix between documents
+library(colorspace) #creates the color palette for the cluster plots
+
+
+sports = VCorpus(DirSource("C:/Users/User/OneDrive/Desktop/Unstructured Data/Project 1/Sports"))
+finance = VCorpus(DirSource("C:/Users/User/OneDrive/Desktop/Unstructured Data/Project 1/Finance"))
+
+docs = c(sports, finance)
+docs
+
+#Cleaning the dataset
+toSpace <- content_transformer(function(x, pattern){return(gsub(pattern, " ", x))})
+
+docs = tm_map(docs,removePunctuation)                #remove punctuation
+docs = tm_map(docs,content_transformer(tolower))     #changes all words to lower case
+docs = tm_map(docs,removeNumbers)                    #remove numbers
+docs = tm_map(docs,removeWords,stopwords("english")) #remove stop words
+docs = tm_map(docs, stripWhitespace)                 #removes extra spaces
+docs = tm_map(docs, toSpace, "-")                    #remove hyphens
+
+#Creating a document term matrix
+dtm = DocumentTermMatrix(docs)
+dtm
+
+#Task 1: LDA 
+#Creating LDA with 2 topics, sports and finance
+
+lda_2 = LDA(dtm, k = 2, control = list(seed=1234))
+lda_2
+
+#Extracting per topic per word probabilities
+#Extracting beta matrix from the LDA model
+#Beta provides the probability of each word belonging to a topic
+ap_topics = tidy(lda_2, matrix = "beta") 
+ap_topics
+
+#Visualising the top 10 most common words in each topic 
+ap_top_terms <- ap_topics %>% 
+  group_by(topic) %>% 
+  top_n(10, beta) %>% 
+  ungroup() %>% 
+  arrange(topic, -beta)
+
+ap_top_terms %>% 
+  mutate(term = reorder(term, beta)) %>% 
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+
+#Running the Beta spread
+beta_spread <- ap_topics %>% 
+  mutate(topic = paste0("topic", topic)) %>% 
+  spread(topic, beta) %>% 
+  filter(topic1 > .001 | topic2 > .001) %>% 
+  mutate(log_ratio = log2(topic2 / topic1))
+
+beta_spread %>% 
+  mutate(term = reorder(term, log_ratio)) %>% 
+  ggplot(aes(term, log_ratio)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip()
+
+beta_spread %>%
+  group_by(direction = ifelse(log_ratio > 0, "Sports", "Finance")) %>%
+  top_n(10, abs(log_ratio)) %>%
+  ungroup() %>%
+  mutate(term = reorder(term, log_ratio)) %>%
+  ggplot(aes(term, log_ratio)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "Words with greatest difference between topics",
+       x = "Term", y = "Log ratio (Sports vs Finance)")
+
+
+ap_documents <- tidy(lda_2, matrix = "gamma")
+ap_documents
