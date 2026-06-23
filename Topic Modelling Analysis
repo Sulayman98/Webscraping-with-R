@@ -120,6 +120,12 @@ ap_documents_5 %>%
   labs(title = "Document-Topic Probabilities (5 Topics)",
        x = "Topic", y = "Gamma")
 
+#Other analysis: looking into specific files
+
+tidy(dtm) %>% 
+  filter(document == "Arsenal moving quickly to get Jerem.txt") %>% 
+  arrange(desc(count))
+
 ##Part 2 Performing Text Clustering
 
 dtm_tfidf <- weightTfIdf(dtm)
@@ -150,4 +156,17 @@ rect.hclust(clustering.hierarchical, 2)
 table(clustering.kmeans$cluster)
 table(cutree(clustering.hierarchical, k = truth.K))
 table(clustering.dbscan$cluster)
+
+#Creating an elbow plot
+cost_df <- data.frame()
+
+for(i in 1:20){
+  kmeans_i <- kmeans(x = tfidf_matrix, centers = i, iter.max = 100)
+  cost_df <- rbind(cost_df, cbind(i, kmeans_i$tot.withinss))
+}
+
+names(cost_df) <- c("cluster", "cost")
+
+plot(cost_df$cluster, cost_df$cost)
+lines(cost_df$cluster, cost_df$cost)
 
