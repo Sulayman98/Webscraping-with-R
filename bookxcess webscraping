@@ -7,26 +7,26 @@ library(dplyr)
 # Adding /products.json switches from the visual webpage to the raw JSON data endpoint
 # Including ?limit=250, which is the standard maximum limit that can be extracted from Shopify
 
-url <- "https://www.bookxcess.com/collections/fiction/products.json?limit=250"
+url1 <- "https://www.bookxcess.com/collections/fiction/products.json?limit=250"
 
 #Use GET to store the information the Bookxcess server provides
-response <- GET(url)
+response1 <- GET(url1)
 
 #Use content to open the information from 'response' to red as text
 #then convert the raw text from before into JSON such that it becomes an object that can be worked with
-data <- content(response, as = "text") %>% fromJSON()
+data1 <- content(response1, as = "text") %>% fromJSON()
 
 #Figuring out what is inside the data. From this function, only "products" is available
-names(data)
+names(data1)
 
-products <- data$products
+products1 <- data$products
 
 #Finding out the details under products
 colnames(products)
 str(products)
 
 #inspecting title, gives the name of books
-name = products$title
+name = products1$title
 
 #inspecting variants,there are prices of the books embedded in this category
 variant = products$variants
@@ -48,14 +48,14 @@ second_price
 check <-data.frame(
   first_price = sapply(products$variants, function(v) v$price[1]), 
   second_price = sapply(products$variants, function(v) v$compare_at_price),
-  difference = as.numeric(sapply(products$variants, function(v) v$compare_at_price)) - as.numeric(sapply(products$variants, function(v) v$price[1]))
+  difference = as.numeric(sapply(products$variants, function(v) v$compare_at_price[1])) - as.numeric(sapply(products$variants, function(v) v$price[1]))
 )
 
 check
 
 #inspecting product_type, it seems to provide author names
-type = products$product_type
-type
+option = products$options
+option
 
 #inspecting vendors, includes details on publishers 
 vendors = products$vendor
@@ -63,12 +63,12 @@ vendors
 
 # Extract relevant information for analysis
 df1 <- data.frame(
-  name          = products$title,
-  author        = products$product_type,
-  vendors       = products&vendors,
-  sale_price    = sapply(products$variants, function(v) v$price[1]),
-  original_price = sapply(products$variants, function(v) v$compare_at_price[1])
-)
+  name          = products1$title,
+  author        = products1$product_type,
+  vendors       = products1$vendor,
+  sale_price    = as.numeric(sapply(products1$variants, function(v) v$price[1])),
+  original_price = as.numeric(sapply(products1$variants, function(v) v$compare_at_price[1])
+))
 
 View(df1)
 
@@ -81,10 +81,10 @@ products2 <- data2$products
 df2 <- data.frame(
   name          = products2$title,
   author        = products2$product_type,
-  vendors       = products2&vendors,
-  sale_price    = sapply(products2$variants, function(v) v$price[1]),
-  original_price = sapply(products2$variants, function(v) v$compare_at_price[1])
-)
+  vendors       = products2$vendor,
+  sale_price    = as.numeric(sapply(products2$variants, function(v) v$price[1])),
+  original_price = as.numeric(sapply(products2$variants, function(v) v$compare_at_price[1])
+))
 View(df2)
 
 #Extracting from the third page
@@ -96,9 +96,106 @@ products3 <- data3$products
 df3 <- data.frame(
   name          = products3$title,
   author        = products3$product_type,
-  vendors       = products&vendors3,
-  sale_price    = sapply(products3$variants, function(v) v$price[1]),
-  original_price = sapply(products3$variants, function(v) v$compare_at_price[1])
-)
+  vendors       = products3$vendor,
+  sale_price    = as.numeric(sapply(products3$variants, function(v) v$price[1])),
+  original_price = as.numeric(sapply(products3$variants, function(v) v$compare_at_price[1])
+))
 View(df3)
 
+#Combine all the pages into one dataframe
+
+fiction <- bind_rows(df1, df2, df3)
+View(fiction)
+
+## Repeat the same exercise for non-fiction books
+# Extracting non-fiction page 1
+url4 = "https://www.bookxcess.com/collections/all-non-fiction-books/products.json?limit=250&page=1"
+response4 = GET(url4)
+data4 = content(response4, as = "text") %>% fromJSON()
+products4 <- data4$products
+df4 <- data.frame(
+  name          = products4$title,
+  author        = products4$product_type,
+  vendors       = products4$vendor,
+  sale_price    = as.numeric(sapply(products4$variants, function(v) v$price[1])),
+  original_price = as.numeric(sapply(products4$variants, function(v) v$compare_at_price[1])
+))
+View(df4)
+
+# Extracting non-fiction page 2
+url5 = "https://www.bookxcess.com/collections/all-non-fiction-books/products.json?limit=250&page=2"
+response5 = GET(url5)
+data5 = content(response5, as = "text") %>% fromJSON()
+products5 <- data5$products
+df5 <- data.frame(
+  name          = products5$title,
+  author        = products5$product_type,
+  vendors       = products5$vendor,
+  sale_price    = as.numeric(sapply(products5$variants, function(v) v$price[1])),
+  original_price = as.numeric(sapply(products5$variants, function(v) v$compare_at_price[1])
+))
+View(df5)
+
+# Extracting non-fiction page 3
+url6 = "https://www.bookxcess.com/collections/all-non-fiction-books/products.json?limit=250&page=3"
+response6 = GET(url6)
+data6 = content(response6, as = "text") %>% fromJSON()
+products6 <- data6$products
+df6 <- data.frame(
+  name          = products6$title,
+  author        = products6$product_type,
+  vendors       = products6$vendor,
+  sale_price    = as.numeric(sapply(products6$variants, function(v) v$price[1])),
+  original_price = as.numeric(sapply(products6$variants, function(v) v$compare_at_price[1])
+))
+View(df6)
+
+non_fiction = bind_rows(df4,df5,df6)
+View(non_fiction)
+
+
+#Visual representation of sales price
+boxplot(as.numeric(fiction$sale_price),
+  main = "Fiction Sale Prices",
+  ylab = "Price (RM)",
+  col = "lightblue")
+
+boxplot(as.numeric(non_fiction$sale_price),
+        main = "Non-Fiction Sale Prices",
+        ylab = "Price (RM)",
+        col = "lightgreen")
+dev.off()
+# Add a category column to each
+fiction$category     <- "Fiction"
+non_fiction$category <- "Non-Fiction"
+
+# Combine them
+all_books <- bind_rows(fiction, non_fiction)
+
+# Side by side boxplot
+boxplot(as.numeric(sale_price) ~ category,
+        data = all_books,
+        main = "Fiction vs Non-Fiction Sale Prices",
+        ylab = "Price (RM)",
+        col  = c("lightblue", "lightgreen"))
+
+#Obtaining summary statistics
+summary(as.numeric(fiction$sale_price))
+summary(as.numeric(non_fiction$sale_price))
+
+#standard deviations
+sd_fiction = sd(as.numeric(fiction$sale_price))
+sd_nonfiction = sd(as.numeric(non_fiction$sale_price))
+sd_fiction
+sd_nonfiction
+
+#One tailed t-test to confirm average non-fiction book price is higher than fiction
+t.test(as.numeric(non_fiction$sale_price),
+       as.numeric(fiction$sale_price),
+       alternative = "greater")
+
+
+#popularity of authors
+sort(table(fiction$author, decreasing = TRUE))
+
+sort(table(non_fiction$author, decreasing = TRUE))
