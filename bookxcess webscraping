@@ -195,7 +195,54 @@ t.test(as.numeric(non_fiction$sale_price),
        alternative = "greater")
 
 
-#popularity of authors
-sort(table(fiction$author, decreasing = TRUE))
+#Assessing the popularity of authors
+View(non_fiction)
+View(fiction)
 
-sort(table(non_fiction$author, decreasing = TRUE))
+# Fiction only
+fiction_author_count <- fiction %>%
+  count(author, sort = TRUE) %>%
+  rename(count = n)
+
+# Non-fiction only
+nonfiction_author_count <- non_fiction %>%
+  count(author, sort = TRUE) %>%
+  rename(count = n)
+
+View(fiction_author_count)
+View(nonfiction_author_count)
+
+
+
+library(wordcloud2)
+wordcloud2(fiction_author_count,size=0.5)
+wordcloud2(fiction_author_count,size=0.5,color="random-light",backgroundColor="black")
+
+library(wordcloud2)
+wordcloud2(nonfiction_author_count,size=0.5)
+wordcloud2(nonfiction_author_count,size=0.5,color="random-light",backgroundColor="black")
+
+
+#Assessing the ubiquity of vendors
+
+# Fiction only
+fiction_vendors_count <- fiction %>%
+  count(vendors, sort = TRUE) %>%
+  rename(count = n)
+
+# Non-fiction only
+nonfiction_vendors_count <- non_fiction %>%
+  count(vendors, sort = TRUE) %>%
+  rename(count = n)
+
+View(fiction_vendors_count)
+View(nonfiction_vendors_count)
+
+library(wordcloud2)
+wordcloud2(fiction_vendors_count,size=0.5)
+wordcloud2(fiction_vendors_count,size=0.5,color="random-light",backgroundColor="black")
+
+
+library(wordcloud2)
+wordcloud2(nonfiction_vendors_count,size=0.5)
+wordcloud2(nonfiction_vendors_count,size=0.5,color="random-light",backgroundColor="black")
