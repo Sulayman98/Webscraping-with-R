@@ -57,40 +57,6 @@ ap_top_terms %>%
   facet_wrap(~ topic, scales = "free") +
   coord_flip()
 
-#Running the Beta spread
-beta_spread <- ap_topics %>% 
-  mutate(topic = paste0("topic", topic)) %>% 
-  spread(topic, beta) %>% 
-  filter(topic1 > .001 | topic2 > .001) %>% 
-  mutate(log_ratio = log2(topic2 / topic1))
-
-beta_spread %>% 
-  mutate(term = reorder(term, log_ratio)) %>% 
-  ggplot(aes(term, log_ratio)) +
-  geom_col(show.legend = FALSE) +
-  coord_flip()
-
-beta_spread %>%
-  group_by(direction = ifelse(log_ratio > 0, "Sports", "Finance")) %>%
-  top_n(10, abs(log_ratio)) %>%
-  ungroup() %>%
-  mutate(term = reorder(term, log_ratio)) %>%
-  ggplot(aes(term, log_ratio)) +
-  geom_col(show.legend = FALSE) +
-  coord_flip() +
-  labs(title = "Words with greatest difference between topics",
-       x = "Term", y = "Log ratio (Sports vs Finance)")
-
-
-ap_documents <- tidy(lda_2, matrix = "gamma")
-ap_documents
-
-ap_documents %>%
-  ggplot(aes(factor(topic), gamma)) +
-  geom_boxplot() +
-  labs(title = "Document-Topic Probabilities",
-       x = "Topic", y = "Gamma")
-
 #Trying LDA with different number of topics 
 #From here, the LDA breaks down the finance topic into three subcategories while football has 2 subcategories
 lda_5 <- LDA(dtm, k = 5, control = list(seed = 1234))
@@ -120,12 +86,63 @@ ap_documents_5 %>%
   labs(title = "Document-Topic Probabilities (5 Topics)",
        x = "Topic", y = "Gamma")
 
+#Running the Beta spread
+beta_spread <- ap_topics %>% 
+  mutate(topic = paste0("topic", topic)) %>% 
+  spread(topic, beta) %>% 
+  filter(topic1 > .001 | topic2 > .001) %>% 
+  mutate(log_ratio = log2(topic2 / topic1))
+
+beta_spread %>% 
+  mutate(term = reorder(term, log_ratio)) %>% 
+  ggplot(aes(term, log_ratio)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip()
+
+beta_spread %>%
+  group_by(direction = ifelse(log_ratio > 0, "Finance", "Football")) %>%
+  top_n(20, abs(log_ratio)) %>%
+  ungroup() %>%
+  mutate(term = reorder(term, log_ratio)) %>%
+  ggplot(aes(term, log_ratio)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "Words with greatest difference between topics",
+       x = "Term", y = "Log ratio (Finance vs Football)")
+
+
+ap_documents <- tidy(lda_2, matrix = "gamma")
+ap_documents
+
+ap_documents %>%
+  ggplot(aes(factor(topic), gamma)) +
+  geom_boxplot() +
+  labs(title = "Document-Topic Probabilities",
+       x = "Topic", y = "Gamma")
+#Per document topic probabilities
+
+
+ap_documents2 <- tidy(lda_2, matrix = "gamma")
+ap_documents
+
+ap_documents5 <- tidy(lda_5, matrix = "gamma")
+ap_documents
+
+
+ap_documents %>%
+  ggplot(aes(gamma, fill = factor(topic))) +
+  geom_histogram(bins = 20, show.legend = FALSE) +
+  facet_wrap(~ topic, labeller = labeller(topic = c("1" = "Topic 1: Finance", "2" = "Topic 2: Football"))) +
+  labs(title = "Per-Document Topic Probabilities",
+       x = "Gamma (Topic Probability)",
+       y = "Number of Documents")
+
+
 #Other analysis: looking into specific files
 
 tidy(dtm) %>% 
   filter(document == "Arsenal moving quickly to get Jerem.txt") %>% 
   arrange(desc(count))
-
 ##Part 2 Performing Text Clustering
 
 dtm_tfidf <- weightTfIdf(dtm)
@@ -169,4 +186,3 @@ names(cost_df) <- c("cluster", "cost")
 
 plot(cost_df$cluster, cost_df$cost)
 lines(cost_df$cluster, cost_df$cost)
-
