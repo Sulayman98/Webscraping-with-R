@@ -1,0 +1,37 @@
+#Task 3 Sentiment Analysis
+
+library(tm)
+library(SnowballC)
+library(wordcloud)
+
+#loading files containing online reviews on Superman (2025)
+
+text = readLines("C:/Users/User/OneDrive/Desktop/Unstructured Data/Project 1/Part 2/Reviews based on engagement, number.txt")
+
+#Loading the file as a corpus
+
+docs = Corpus(VectorSource(text))
+inspect(docs)
+
+# Replace special characters with space
+toSpace <- content_transformer(function(x, pattern) gsub(pattern, " ", x))
+docs <- tm_map(docs, toSpace, "/")
+docs <- tm_map(docs, toSpace, "@")
+docs <- tm_map(docs, toSpace, "\\|")
+
+# Clean the text
+docs <- tm_map(docs, content_transformer(tolower))   # lowercase
+docs <- tm_map(docs, removeNumbers)                  # remove numbers
+docs <- tm_map(docs, removeWords, stopwords("english"))  # remove stopwords
+docs <- tm_map(docs, removePunctuation)              # remove punctuation
+docs <- tm_map(docs, stripWhitespace)                # remove extra spaces
+docs <- tm_map(docs, stemDocument)                   # stemming
+
+# Build term document matrix
+dtm <- TermDocumentMatrix(docs)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m), decreasing = TRUE)
+d <- data.frame(word = names(v), freq = v)
+
+# Preview top words
+head(d, 10)
