@@ -186,3 +186,21 @@ ggplot(feel_df, aes(x=reorder(word, correlation),
   labs(title="Words Most Associated with 'feel'",
        x="Words", y="Correlation") +
   theme_minimal()
+
+
+# Get associations for the word 'film' only
+film_assoc <- findAssocs(dtm, terms = "film", corlimit = 0.3)
+film_df <- data.frame(
+  word = names(film_assoc$film),
+  correlation = film_assoc$film
+)
+
+# Plot it
+ggplot(film_df, aes(x=reorder(word, correlation), 
+                    y=correlation, fill=correlation)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  labs(title="Words Most Associated with 'film'",
+       x="Words", y="Correlation") +
+  theme_minimal()
+
