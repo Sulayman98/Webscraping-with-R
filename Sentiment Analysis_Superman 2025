@@ -170,3 +170,19 @@ ggplot(trust_df, aes(x=reorder(word, correlation),
   labs(title="Words Most Associated with 'trust'",
        x="Words", y="Correlation") +
   theme_minimal()
+
+# Get associations for the word 'feel only
+feel_assoc <- findAssocs(dtm, terms = "feel", corlimit = 0.45)
+feel_df <- data.frame(
+  word = names(feel_assoc$feel),
+  correlation = feel_assoc$feel
+)
+
+# Plot it
+ggplot(feel_df, aes(x=reorder(word, correlation), 
+                     y=correlation, fill=correlation)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  labs(title="Words Most Associated with 'feel'",
+       x="Words", y="Correlation") +
+  theme_minimal()
