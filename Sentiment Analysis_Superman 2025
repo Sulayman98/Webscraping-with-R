@@ -57,3 +57,116 @@ rbind(
   sign(head(bing_vector)),
   sign(head(afinn_vector))
 )
+#Identifying most common positive and negative words
+# Word frequency table
+head(d, 20)
+
+# Bar plot of top 5 words
+barplot(d[1:20,]$freq, las=2, 
+        names.arg = d[1:20,]$word,
+        col="lightgreen", 
+        main="Top 5 Most Frequent Words",
+        ylab="Word Frequencies")
+
+# Word cloud
+set.seed(1234)
+wordcloud(words = d$word, freq = d$freq, 
+          min.freq = 2,
+          max.words = 100, 
+          random.order = FALSE,
+          rot.per = 0.40,
+          colors = brewer.pal(8, "Dark2"))
+
+# Custom dictionary sentiment analysis
+m <- d$word  # using your already cleaned word list
+
+mysentiment <- function(m)
+{
+  mydictpos = c("good", "great", "love", "terrif", "amaz", 
+                "delight", "fun", "brilliant", "perfect", "best")
+  
+  mydictneg = c("bad", "ugly", "lazy", "worst", "bore", 
+                "disappoint", "mess", "hate", "poor", "weak")
+  
+  pos_score = sum(!is.na(match(m, mydictpos)))
+  neg_score = (-1)*sum(!is.na(match(m, mydictneg)))
+  sentiment_score = pos_score + neg_score
+  sentiment_score
+}
+
+mysentiment(m)
+
+
+# Emotion classification using NRC
+d_nrc <- get_nrc_sentiment(text)
+head(d_nrc, 10)
+
+# Visualization - transpose the data
+td <- data.frame(t(d_nrc))
+td_new <- data.frame(rowSums(td))
+names(td_new)[1] <- "count"
+td_new <- cbind("sentiment" = rownames(td_new), td_new)
+rownames(td_new) <- NULL
+td_new2 <- td_new[1:8,]
+
+# Plot 1 - count of words per emotion
+library(ggplot2)
+
+order_sentiments <- td_new2$sentiment[order(td_new2$count)]
+
+quickplot(factor(sentiment, levels=order_sentiments), 
+          data=td_new2, 
+          weight=count, 
+          geom="bar",
+          fill=sentiment, 
+          xlab="sentiment",
+          ylab="count") +
+  ggtitle("Survey sentiments")
+
+
+# Plot 2 - emotions as percentage
+barplot(
+  sort(colSums(prop.table(d_nrc[, 1:8]))),
+  horiz = TRUE,
+  cex.names = 0.7,
+  las = 1,
+  main = "Emotions in Text", 
+  xlab = "Percentage"
+)
+
+# Word Association - also in the slides
+findAssocs(dtm, terms = c("superman", "good", "film"), corlimit = 0.25)
+
+library(ggplot2)
+
+# Get associations for superman only
+superman_assoc <- findAssocs(dtm, terms = "superman", corlimit = 0.40)
+superman_df <- data.frame(
+  word = names(superman_assoc$superman),
+  correlation = superman_assoc$superman
+)
+
+# Plot it
+ggplot(superman_df, aes(x=reorder(word, correlation), 
+                        y=correlation, fill=correlation)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  labs(title="Words Most Associated with 'Superman'",
+       x="Words", y="Correlation") +
+  theme_minimal()
+
+# Get associations for trust only
+trust_assoc <- findAssocs(dtm, terms = "trust", corlimit = 0.45)
+trust_df <- data.frame(
+  word = names(trust_assoc$trust),
+  correlation = trust_assoc$trust
+)
+
+# Plot it
+ggplot(trust_df, aes(x=reorder(word, correlation), 
+                        y=correlation, fill=correlation)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  labs(title="Words Most Associated with 'trust'",
+       x="Words", y="Correlation") +
+  theme_minimal()
