@@ -35,3 +35,25 @@ d <- data.frame(word = names(v), freq = v)
 
 # Preview top words
 head(d, 10)
+
+#Sentiment scoring using different lexicons
+library(syuzhet)
+
+# Get sentiment scores using 4 different methods
+syuzhet_vector <- get_sentiment(text, method="syuzhet")
+bing_vector <- get_sentiment(text, method="bing")
+afinn_vector <- get_sentiment(text, method="afinn")
+nrc_vector <- get_sentiment(text, method="nrc")
+
+# View summaries
+summary(syuzhet_vector)
+summary(bing_vector)
+summary(afinn_vector)
+summary(nrc_vector)
+
+# Compare all three side by side
+rbind(
+  sign(head(syuzhet_vector)),
+  sign(head(bing_vector)),
+  sign(head(afinn_vector))
+)
